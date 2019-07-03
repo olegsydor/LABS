@@ -1,0 +1,36 @@
+USE O_SYDOR_MODULE_2
+GO
+
+SET IDENTITY_INSERT [dbo].[Agents] on
+GO
+
+/*  TABLE Agents. CHECK PRIMARY KEY IN TABLE AGENTS
+SET IDENTITY_INSERTED SWITCHED INTO ON 
+FOR HAVING POSSIBILITY TO ADD PARTICULAR VALUE INTO THIS FIELD
+*/
+/* RUN THIS SCRIPT TWICE */
+BEGIN TRY
+	INSERT INTO [dbo].[Agents]
+			   ([EDRPOU]
+			   ,[ID_CONTRAGENT]
+			   ,[SHORTNAME]
+			   ,[FULLNAME]
+			   ,[DIRECTOR]
+			   ,[CAPITAL]
+			   ,[FOUNDED]
+			   )
+		 VALUES
+			   ('2652105555'
+			   ,5555
+			   ,'SHORTNAME, nvarchar'
+			   ,'FULLNAME, nvarchar(100)'
+			   ,'DIRECTOR, nvarchar(50)'
+			   ,100000
+			   ,'19850505'
+			   )
+END TRY
+BEGIN CATCH
+    SELECT   
+        ERROR_NUMBER() AS ErrorNumber  
+       ,ERROR_MESSAGE() AS ErrorMessage;  
+END CATCH

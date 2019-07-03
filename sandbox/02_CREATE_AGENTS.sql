@@ -1,0 +1,103 @@
+USE [O_SYDOR_MODULE_2]
+
+BEGIN TRANSACTION
+SET QUOTED_IDENTIFIER ON
+SET ARITHABORT ON
+SET NUMERIC_ROUNDABORT OFF
+SET CONCAT_NULL_YIELDS_NULL ON
+SET ANSI_NULLS ON
+SET ANSI_PADDING ON
+SET ANSI_WARNINGS ON
+COMMIT
+
+
+--DROP TABLE IF EXISTS Agents
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Agents' AND TABLE_SCHEMA = 'dbo')
+DROP TABLE dbo.Agents;
+GO
+
+
+CREATE TABLE dbo.Agents
+	(
+	INSERTED_DATE date NOT NULL,
+	ID_CONTRAGENT int NOT NULL IDENTITY (1, 1),
+	EDRPOU nvarchar(10) NOT NULL,
+	SHORTNAME nvarchar(20) NOT NULL,
+	FULLNAME nvarchar(100) NOT NULL,
+	DIRECTOR nvarchar(50) NULL,
+	CAPITAL decimal(18, 0) NULL,
+	FOUNDED date NULL,
+	COUNTRY_COD int NOT NULL,
+	PREV_REC int NULL,
+	UPDATED_DATE date NULL
+	)  ON [PRIMARY]
+GO
+
+
+
+ALTER TABLE dbo.Agents ADD CONSTRAINT
+	DF_Agents_COUNTRY_COD DEFAULT 840 FOR COUNTRY_COD
+GO
+
+
+ALTER TABLE dbo.Agents ADD CONSTRAINT 
+    DF_Agents_INSERTED_DATE DEFAULT (getdate()) FOR INSERTED_DATE
+GO
+
+ALTER TABLE dbo.Agents ADD CONSTRAINT
+	PK_Agents PRIMARY KEY CLUSTERED 
+	(
+	ID_CONTRAGENT
+	) WITH( STATISTICS_NORECOMPUTE = OFF, 
+	        IGNORE_DUP_KEY = OFF, 
+			ALLOW_ROW_LOCKS = ON, 
+			ALLOW_PAGE_LOCKS = ON) 
+	  ON [PRIMARY]
+
+GO
+
+CREATE NONCLUSTERED INDEX IX_Agents ON dbo.Agents
+	(
+	ID_CONTRAGENT
+	) WITH( STATISTICS_NORECOMPUTE = OFF, 
+	        IGNORE_DUP_KEY = OFF, 
+			ALLOW_ROW_LOCKS = ON, 
+			ALLOW_PAGE_LOCKS = ON) 
+	  ON [PRIMARY]
+GO
+
+ALTER TABLE dbo.Agents SET (LOCK_ESCALATION = TABLE)
+GO
+
+
+-----------------------------------
+
+/***** When we get some modification of table old data is copying into new record before modifying applies ******/ 
+CREATE OR ALTER TRIGGER dbo.Agents_Update   
+ON dbo.Agents
+FOR UPDATE   
+AS
+
+INSERT INTO [dbo].[Agents]
+           ([EDRPOU]
+           ,[SHORTNAME]
+           ,[FULLNAME]
+           ,[DIRECTOR]
+           ,[CAPITAL]
+           ,[FOUNDED]
+           ,[COUNTRY_COD]
+		   ,[PREV_REC]
+		   ,[UPDATED_DATE]
+)
+SELECT [EDRPOU]
+      ,[SHORTNAME]
+      ,[FULLNAME]
+      ,[DIRECTOR]
+      ,[CAPITAL]
+      ,[FOUNDED]
+      ,[COUNTRY_COD]
+	  ,[ID_CONTRAGENT]
+	  ,getdate()
+  FROM deleted
+
+

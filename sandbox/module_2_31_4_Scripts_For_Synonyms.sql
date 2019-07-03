@@ -1,0 +1,45 @@
+USE EDUCATION
+GO
+
+/* Script #1 */
+SELECT * FROM A1
+GO
+
+/* Script #2 */
+SELECT A4.[INSERTED_DATE]
+      ,O1.[SHORTNAME] AS 'Sender'
+      ,O2.[SHORTNAME] AS 'Receiver'
+      ,A4.[GOOD_CODE]
+      ,A4.[GOOD_DESCR]
+      ,A4.[NETTO]
+      ,A4.[PRICE]
+  FROM A4
+  JOIN 
+  A1 AS O1
+  ON A4.SENDER_CODE = O1.ID_CONTRAGENT
+  JOIN
+  A1 AS O2
+  ON A4.SENDER_CODE = O2.ID_CONTRAGENT
+GO
+
+/* Script #3 */
+SELECT [INSERTED_DATE]
+      ,[ID_CONTRAGENT]
+      ,[SHORTNAME]
+      ,[TYPE_OF_OPERATION]
+      ,[DATE_OF_OPERATION]
+  FROM A3
+  ORDER BY [ID_CONTRAGENT]
+GO
+
+/* Script #4 */
+SELECT [INSERTED_DATE]
+      ,[EDRPOU]
+      ,[FULLNAME]
+      ,[PHONE_NUMBER]
+      ,[ADDRESS]
+      ,[DIRECTOR]
+      ,[CAPITAL]
+      ,[FOUNDED]
+  FROM A2
+GO
