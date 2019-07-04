@@ -128,19 +128,3 @@ ALTER TABLE dbo.supplies ADD CONSTRAINT
 	 ON DELETE  NO ACTION 
 	
 GO
-
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'geography' AND TABLE_SCHEMA = 'dbo')
-DROP TABLE dbo.geography
-GO
-
-CREATE TABLE [geography]
-(
-id int not null primary key, 
-name varchar(20), 
-region_id int
-)
-GO
-
-ALTER TABLE [geography] ADD CONSTRAINT 
-R_GB FOREIGN KEY (region_id) REFERENCES [geography] (id)
-GO

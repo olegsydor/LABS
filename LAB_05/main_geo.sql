@@ -69,7 +69,7 @@ GO
         id, 
         name,
         region_id,
-		-1 AS place_level
+		1 AS place_level
     FROM       
         [geography]
 	WHERE id = 2
@@ -84,11 +84,9 @@ GO
         INNER JOIN cte_org AS o
             ON o.id = e.region_id
 )
-SELECT region_id, id, name, place_level
+SELECT name, id, region_id, place_level
 FROM 
     cte_org
-	WHERE place_level >= 0
-	ORDER BY id
 GO
 
 
@@ -130,7 +128,7 @@ regionID    place_ID    name                 PlaceLevel
         INNER JOIN cte_org AS o 
             ON o.id = e.region_id
 )
-SELECT region_id, id, name, place_level
+SELECT region_id AS regionID, id AS place_ID, name, place_level AS PlaceLevel
 FROM 
     cte_org
 	WHERE region_id = 1
@@ -169,8 +167,7 @@ AS (
     FROM       
         geography
 	WHERE id = 2
-
-    UNION ALL
+UNION ALL
     SELECT 
 	    e.id,
         e.name,

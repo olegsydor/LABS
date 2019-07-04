@@ -82,37 +82,3 @@ VALUES
 	(5, 5, 4, 400),
 	(5, 6, 4, 500)
 GO
-
-insert into [geography] values (1, 'Ukraine', null);
-insert into [geography] values (2, 'Lviv', 1);
-insert into [geography] values (8, 'Brody', 2);
-insert into [geography] values (18, 'Gayi', 8);
-insert into [geography] values (9, 'Sambir', 2);
-insert into [geography] values (17, 'St.Sambir', 9);
-insert into [geography] values (10, 'Striy', 2);
-insert into [geography] values (11, 'Drogobych', 2);
-insert into [geography] values (15, 'Shidnytsja', 11);
-insert into [geography] values (16, 'Truskavets', 11);
-insert into [geography] values (12, 'Busk', 2);
-insert into [geography] values (13, 'Olesko', 12);
-insert into [geography] values (30, 'Lvivska st', 13);
-insert into [geography] values (14, 'Verbljany', 12);
-insert into [geography] values (3, 'Rivne', 1);
-insert into [geography] values (19, 'Dubno', 3);
-insert into [geography] values (31, 'Lvivska st', 19);
-insert into [geography] values (20, 'Zdolbuniv', 3);
-insert into [geography] values (4, 'Ivano-Frankivsk', 1);
-insert into [geography] values (21, 'Galych', 4);
-insert into [geography] values (32, 'Svobody st', 21);
-insert into [geography] values (22, 'Kalush', 4);
-insert into [geography] values (23, 'Dolyna', 4);
-insert into [geography] values (5, 'Kiyv', 1);
-insert into [geography] values (24, 'Boryspil', 5);
-insert into [geography] values (25, 'Vasylkiv', 5);
-insert into [geography] values (6, 'Sumy', 1);
-insert into [geography] values (26, 'Shostka', 6);
-insert into [geography] values (27, 'Trostjanets', 6);
-insert into [geography] values (7, 'Crimea', 1);
-insert into [geography] values (28, 'Yalta', 7);
-insert into [geography] values (29, 'Sudack', 7);
-
