@@ -34,12 +34,14 @@ GO
 */
 -------------------------------------------
 /* 2e. Розрахувати календар поточного місяця за допомогою рекурсивної CTE та вивести дні місяця у форматі таблиці з колонками */
-;WITH C_CTE (da)
+;WITH C_CTE (da, na)
 AS
 (
-SELECT DATEADD(WEEK, -1,EOMONTH(GETDATE(), -1)) AS da
+SELECT DATEADD(WEEK, -1,EOMONTH(GETDATE(), -1)) AS da,
+       DATEPART(dw, DATEADD(WEEK, -1,EOMONTH(GETDATE(), -1))) AS na
 UNION ALL
-SELECT DATEADD(DAY, 1, da) AS da 
+SELECT DATEADD(DAY, 1, da) AS da,
+       DATEPART(dw, DATEADD(DAY, 1, da)) AS na
 FROM C_CTE AS s
 WHERE da < DATEADD(WEEK, 1, EOMONTH(GETDATE()))
 )
@@ -126,8 +128,9 @@ SET @@actDate = '2019-08-11'
 
 DECLARE @@firstMonday INT
 SET @@firstMonday = 1 - DATEPART(dw, DATEADD(DAY, 1, EOMONTH(@@actDate,-1)))
-SELECT DATEADD(DAY, 1, EOMONTH(@@actDate,-1)), DATEPART(dw, DATEADD(DAY, 1, EOMONTH(@@actDate,-1))), @@firstMonday
-
+SELECT DATEADD(DAY, 1, EOMONTH(@@actDate,-1)) as 'first day of the month', 
+       DATEPART(dw, DATEADD(DAY, 1, EOMONTH(@@actDate,-1))) as 'Name of the first day', 
+	   @@firstMonday as 'first Monday of the first week'
 
 
 
@@ -135,13 +138,13 @@ SELECT DATEADD(DAY, 1, EOMONTH(@@actDate,-1)), DATEPART(dw, DATEADD(DAY, 1, EOMO
 ;WITH C_CAL (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
 AS
 (
-SELECT  @@firstMonday+1 AS Monday,
-		@@firstMonday+2 AS Tuesday,
-		@@firstMonday+3  AS Wednesday,
-		@@firstMonday+4  AS Thursday,
-		@@firstMonday+5  AS Friday,
-		@@firstMonday+6  AS Saturday,
-		@@firstMonday+7  AS Sunday
+SELECT  IIF(@@firstMonday+1>0,@@firstMonday+1, NULL) AS Monday,
+		IIF(@@firstMonday+2>0,@@firstMonday+2, NULL) AS Tuesday,
+		IIF(@@firstMonday+3>0,@@firstMonday+3, NULL) AS Wednesday,
+		IIF(@@firstMonday+4>0,@@firstMonday+4, NULL) AS Thursday,
+		IIF(@@firstMonday+5>0,@@firstMonday+5, NULL) AS Friday,
+		IIF(@@firstMonday+6>0,@@firstMonday+6, NULL) AS Saturday,
+		IIF(@@firstMonday+7>0,@@firstMonday+7, NULL) AS Sunday
 UNION ALL
 SELECT Monday + 7,
        Tuesday + 7,
@@ -157,3 +160,146 @@ SELECT * FROM C_CAL
 GO 
 
 
+-----------------------------------
+
+/* 2e. Розрахувати календар поточного місяця за допомогою рекурсивної CTE та вивести дні місяця у форматі таблиці з колонками */
+
+
+DECLARE @@actDate DATE, @@firstDayOfTheMonth DATE, @@cntDaysBack INT, @@firstMonday DATE
+--SET @@actDate = GETDATE()
+SET @@actDate = '2019-08-11'
+SET @@firstDayOfTheMonth = DATEADD(DAY, 1, EOMONTH(@@actDate,-1)) -- FIRST DAY OF THE MONTH
+SET @@cntDaysBack = DATEPART(dw, DATEADD(DAY, 1, EOMONTH(@@actDate,-1))) -- NUMBER OF THE DAY
+SET @@firstMonday = DATEADD(DAY, 
+               1 - DATEPART(dw, DATEADD(DAY, 1, EOMONTH(@@actDate,-1))), 
+			   DATEADD(DAY, 1, EOMONTH(@@actDate,-1))) -- FIRST MONDAY
+--SELECT @@firstDayOfTheMonth, @@cntDaysBack, @@firstMonday
+
+;WITH C_CTE (da, na, we)
+AS
+(
+SELECT @@firstMonday AS da,
+       DATEPART(dw, @@firstMonday) AS na,
+	   0 AS we
+UNION ALL
+SELECT DATEADD(DAY, 1, da) AS da,
+       DATEPART(dw, DATEADD(DAY, 1, da)) AS na,
+	   DATEDIFF(WEEK, @@firstMonday, DATEADD(DAY, 0, da)) AS we
+FROM C_CTE AS s
+WHERE da < '2019-08-31'
+)
+SELECT da, na, we FROM C_CTE
+--GO
+
+SELECT we, 
+       [1] AS '1', 
+       [2] AS '2', 
+	   [3] AS '3', 
+	   [4] AS '4', 
+	   [5] AS '5', 
+	   [6] AS '6', 
+	   [7] AS '7'  
+FROM 
+(SELECT da, na, we FROM TTT) AS p  
+PIVOT  
+(  
+MIN(p.da)
+FOR p.na IN ([1], [2], [3], [4], [5], [6], [7] )  
+) AS pvt  
+GO
+----------------------------------------------------------------------
+
+
+
+/* 2e. Розрахувати календар поточного місяця за допомогою рекурсивної CTE та вивести дні місяця у форматі таблиці з колонками */
+
+SET DATEFIRST 1
+DECLARE @@actDate DATE, @@firstDayOfTheMonth DATE, @@firstMonday DATE
+SET @@actDate = GETDATE()
+--SET @@actDate = '2019-08-11'
+SET @@firstDayOfTheMonth = DATEADD(DAY, 1, EOMONTH(@@actDate,-1)) -- FIRST DAY OF THE MONTH
+SET @@firstMonday = DATEADD(DAY, 
+               1 - DATEPART(dw, DATEADD(DAY, 1, EOMONTH(@@actDate,-1))), 
+			   DATEADD(DAY, 1, EOMONTH(@@actDate,-1))) -- FIRST MONDAY
+--SELECT @@firstDayOfTheMonth
+
+;WITH C_CTE (da)
+AS
+(
+SELECT @@firstDayOfTheMonth AS da
+UNION ALL
+SELECT DATEADD(DAY, 1, da) AS da
+FROM C_CTE AS s
+WHERE da < EOMONTH(@@actDate)
+)
+--SELECT da FROM C_CTE
+--GO
+
+SELECT --we, 
+       [1] AS '1', 
+       [2] AS '2', 
+	   [3] AS '3', 
+	   [4] AS '4', 
+	   [5] AS '5', 
+	   [6] AS '6', 
+	   [7] AS '7'  
+FROM 
+(
+SELECT da,
+       DATEPART(dw, da) AS na,
+	   DATEDIFF(WEEK, @@firstDayOfTheMonth, DATEADD(DAY, -1, da)) AS we
+FROM C_CTE
+) AS P
+PIVOT  
+(  
+MIN(p.da)
+FOR p.na IN ([1], [2], [3], [4], [5], [6], [7] )  
+) AS pvt  
+
+ ------------------------
+
+ 
+SET DATEFIRST 1
+DECLARE @@actDate DATE, @@firstDayOfTheMonth DATE, @@firstMonday DATE
+--SET @@actDate = GETDATE()
+SET @@actDate = '2019-08-11'
+SET @@firstDayOfTheMonth = DATEADD(DAY, 1, EOMONTH(@@actDate,-1)) -- FIRST DAY OF THE MONTH
+SET @@firstMonday = DATEADD(DAY, 
+               1 - DATEPART(dw, DATEADD(DAY, 1, EOMONTH(@@actDate,-1))), 
+			   DATEADD(DAY, 1, EOMONTH(@@actDate,-1))) -- FIRST MONDAY
+--SELECT @@firstDayOfTheMonth
+
+;WITH C_CTE (da)
+AS
+(
+SELECT @@firstDayOfTheMonth AS da
+UNION ALL
+SELECT DATEADD(DAY, 1, da) AS da
+FROM C_CTE AS s
+WHERE da < EOMONTH(@@actDate)
+)
+--SELECT da FROM C_CTE
+--GO
+
+SELECT --we, 
+       [1] AS '1', 
+       [2] AS '2', 
+	   [3] AS '3', 
+	   [4] AS '4', 
+	   [5] AS '5', 
+	   [6] AS '6', 
+	   [7] AS '7'  
+FROM 
+(
+SELECT da,
+       DATEPART(dw, da) AS na,
+	   DATEDIFF(WEEK, @@firstDayOfTheMonth, DATEADD(DAY, -1, da)) AS we
+FROM C_CTE
+) AS P
+PIVOT  
+(  
+MIN(p.da)
+FOR p.na IN ([1], [2], [3], [4], [5], [6], [7] )  
+) AS pvt  
+
+ 
