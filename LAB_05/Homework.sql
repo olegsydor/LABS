@@ -138,6 +138,52 @@ GO
 
 /* 2e. Розрахувати календар поточного місяця за допомогою рекурсивної CTE та вивести дні місяця у форматі таблиці з колонками */
 
+SET DATEFIRST 1
+DECLARE @@actDate DATE
+DECLARE @@firstDayOfTheMonth DATE
+DECLARE @@startOfTheMonth INT
+SET @@actDate = GETDATE()
+--SET @@actDate = '2019-12-11' -- FOR TESTING
+
+SET @@firstDayOfTheMonth = DATEADD(DAY, 1, EOMONTH(@@actDate,-1))
+SET @@startOfTheMonth = datepart(dw, @@firstDayOfTheMonth)
+
+SELECT @@actDate, @@firstDayOfTheMonth, @@startOfTheMonth
+ 
+
+;WITH C_CTE (da, na, we)
+AS
+(
+SELECT 1 AS da,
+       @@startOfTheMonth%7 AS na,
+	   0 AS we
+UNION ALL
+SELECT da + 1 AS da,
+       (na + 1)%7 AS na,
+	   IIF(na = 0, we+1, we) AS we
+FROM C_CTE
+WHERE da < DATEPART(DAY, EOMONTH('2019-08-11'))
+)
+--SELECT * FROM C_CTE
+SELECT [1] AS 'Monday', 
+       [2] AS 'Tuesday', 
+       [3] AS 'Wednesday', 
+	   [4] AS 'Thursday', 
+	   [5] AS 'Friday', 
+	   [6] AS 'Saturday', 
+	   [0] AS 'Sunday'
+FROM 
+(
+SELECT da AS da,
+       na AS na,
+	   we AS we
+FROM C_CTE
+) AS P
+PIVOT  
+(  
+MIN(p.da)
+FOR p.na IN ([1], [2], [3], [4], [5], [6], [0])  
+) AS pvt  
 
 
 /* 3. Geography	 */
@@ -369,7 +415,77 @@ GO
 /* 4. Написати запити використовуючи UNION, UNION ALL , EXCEPT, INTERSECT */
 
 /* 4a.	Вибрати постачальників з Лондона або Парижу */
-/* 4b.	Вибрати всі міста, де є постачальники  і/або деталі (два запити – перший повертає міста з дублікатами, другий без дублікатів) . Міста у кожному запиті  відсортувати в алфавітному порядку */
+
+SELECT S.[supplierid]
+      ,S.[name]
+  FROM [suppliers] AS S
+WHERE S.city = 'London'
+UNION ALL
+SELECT S.[supplierid]
+      ,S.[name]
+  FROM [suppliers] AS S
+WHERE S.city = 'Paris'
+
+ 
+/* 4b.	Вибрати всі міста, де є постачальники  і/або деталі (два запити – перший повертає міста з дублікатами, другий без дублікатів) . 
+Міста у кожному запиті  відсортувати в алфавітному порядку */
+SELECT * FROM
+(SELECT S.[city]
+ FROM [suppliers] AS S
+INTERSECT
+ SELECT D.[city]
+ FROM [details] AS D
+) AS X
+ORDER BY X.city
+
+SELECT * FROM
+(SELECT S.[city]
+ FROM [suppliers] AS S
+ UNION
+ SELECT D.[city]
+ FROM [details] AS D
+) AS X
+ORDER BY X.city
+
 /* 4c.	Вибрати всіх постачальників за вийнятком тих, що постачають деталі з Лондона */
-/* 4d.	Знайти різницю між множиною продуктів, які знаходяться в Лондоні та Парижі  і множиною продуктів, які знаходяться в Парижі та Римі */
-/* 4e.	Вибрати поставки, що зробив постачальник з Лондона, а також поставки зелених деталей за виключенням поставлених виробів з Парижу (код постачальника, код деталі, код виробу) */
+SELECT S.[supplierid]
+      ,S.[name]
+  FROM [suppliers] AS S
+  EXCEPT
+SELECT S.[supplierid]
+      ,S.[name]
+  FROM [suppliers] AS S
+  JOIN [supplies] AS A
+  ON A.supplierid = S.supplierid
+  JOIN [details] AS D
+  ON D.detailid = A.detailid
+  AND D.city = 'London'
+
+/* 4d.	Знайти різницю між множиною продуктів, які знаходяться в Лондоні та Парижі
+і множиною продуктів, які знаходяться в Парижі та Римі */
+SELECT P.[productid]
+  FROM [products] AS P
+  WHERE P.city IN ('London','Paris')
+EXCEPT
+SELECT P.[productid]
+  FROM [products] AS P
+  WHERE P.city IN ('Roma','Paris')
+
+/* 4e.	Вибрати поставки, що зробив постачальник з Лондона, 
+а також поставки зелених деталей за виключенням поставлених виробів з Парижу (код постачальника, код деталі, код виробу) */
+
+SELECT A.[supplierid]
+      ,A.[detailid]
+      ,A.[productid]
+  FROM [supplies] AS A
+  JOIN [suppliers] AS S
+  ON S.supplierid = A.supplierid
+  AND S.city = 'London'
+  UNION ALL
+ SELECT A.[supplierid]
+      ,A.[detailid]
+      ,A.[productid]
+  FROM [supplies] AS A
+  JOIN [details] AS D
+  ON D.detailid = A.detailid
+  AND D.color = 'Green'
