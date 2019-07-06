@@ -148,7 +148,7 @@ SET @@actDate = GETDATE()
 SET @@firstDayOfTheMonth = DATEADD(DAY, 1, EOMONTH(@@actDate,-1))
 SET @@startOfTheMonth = datepart(dw, @@firstDayOfTheMonth)
 
-SELECT @@actDate, @@firstDayOfTheMonth, @@startOfTheMonth
+--SELECT @@actDate, @@firstDayOfTheMonth, @@startOfTheMonth
  
 
 ;WITH C_CTE (da, na, we)

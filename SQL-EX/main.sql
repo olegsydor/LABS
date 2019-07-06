@@ -521,3 +521,81 @@ FROM [outcome] AS O
 GROUP BY X.date, X.point
 	) AS O
 /* 5023 */
+
+/* Find the PC makers with all personal computer models produced by them being present in the PC table.*/
+
+SELECT DISTINCT P.maker FROM [Product] AS P
+WHERE P.type = 'PC'
+AND 
+--NOT EXISTS P.model WHERE NOT IN PC
+NOT EXISTS (
+SELECT P1.model FROM Product AS P1
+WHERE P1.maker = P.maker
+AND P1.type = 'PC'
+AND P1.model NOT IN
+(SELECT model FROM PC)
+)
+
+/* 4584 */
+
+/* Among the customers using a single airline, find distinct passengers who have flown most frequently. 
+Result set: passenger name, number of trips.*/
+
+SELECT TOP 1 WITH TIES 
+G.name, X.cnt FROM [Passenger] AS G
+JOIN
+(
+SELECT COUNT(P.[date]) AS CNT
+      ,P.[id_psg]
+  FROM [pass_in_trip] AS P
+  JOIN [trip] AS T
+  ON T.trip_no = P.trip_no
+  GROUP BY P.ID_psg
+  HAVING COUNT(DISTINCT(T.ID_comp)) = 1) AS X
+ON X.ID_psg = G.ID_psg
+ORDER BY X.CNT DESC
+/* 4417 */
+
+/*For each country, determine the battles in which the ships of this country did not participate.
+Result set: country, battle.*/
+
+
+  SELECT DISTINCT C.country, B.name FROM Classes AS C, Battles AS B
+  EXCEPT
+SELECT CC.country, O.battle FROM 
+(
+SELECT S.[name]
+      ,S.[class]
+  FROM [Ships] AS S
+UNION ALL
+  SELECT C.[class] AS name
+        ,C.class  AS class
+  FROM [Classes] AS C
+) AS X
+  JOIN Classes AS CC
+  ON CC.class = X.class
+  JOIN [Outcomes] AS O
+  ON O.ship = X.name
+
+  /* 4260 */
+/* Get all ship classes of Russia. If there are no Russian ship classes in the database, display classes of all countries present in the DB.
+Result set: country, class.*/
+  ;WITH C_CTE (class, country) AS
+(
+SELECT DISTINCT CC.class, CC.country FROM 
+(
+SELECT S.[name]
+      ,S.[class]
+  FROM [Ships] AS S
+UNION ALL
+  SELECT C.[class] AS name
+        ,C.class  AS class
+  FROM [Classes] AS C
+) AS X
+  JOIN Classes AS CC
+  ON CC.class = X.class
+)
+SELECT country, class FROM C_CTE
+WHERE C_CTE.country = ALL(
+SELECT country FROM C_CTE WHERE C_CTE.country = 'Russia')
+/* 4119 */
