@@ -159,7 +159,41 @@ SELECT * FROM D_CTE
 GO
 
 /* 2e. Розрахувати календар поточного місяця за допомогою рекурсивної CTE та вивести дні місяця у форматі таблиці з колонками */
+SET DATEFIRST 1
+DECLARE @@actDate DATE, @@firstDay DATE, @@startOfTheMonth INT, @@startFrom INT, @@lastDay INT 
 
+--SET @@actDate = GETDATE()
+SET @@actDate = '2019-12-12' -- FOR TESTING
+SET @@lastDay         = DATEPART(DAY, EOMONTH(@@actDate))      -- Number of the last day of the Month
+SET @@firstDay        = DATEADD(DAY, 1, EOMONTH(@@actDate,-1)) -- date of the first day of the Month
+SET @@startOfTheMonth = datepart(dw, @@firstDay)               -- Number of the first day 
+SET @@startFrom       = 2 - @@startOfTheMonth                  -- diff between the first day of the month and first day of the current week
+
+;WITH C_CTE (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
+AS
+(
+SELECT IIF(@@startFrom < 1, NULL, @@startFrom) AS Monday
+      ,IIF((@@startFrom + 1) < 1, NULL, @@startFrom + 1) AS Tuesday
+	  ,IIF((@@startFrom + 2) < 1, NULL, @@startFrom + 2) AS Wednesday
+	  ,IIF((@@startFrom + 3) < 1, NULL, @@startFrom + 3)  AS Thursday
+	  ,IIF((@@startFrom + 4) < 1, NULL, @@startFrom + 4)  AS Friday
+	  ,IIF((@@startFrom + 5) < 1, NULL, @@startFrom + 5)  AS Saturday
+	  ,IIF((@@startFrom + 6) < 1, NULL, @@startFrom + 6)  AS Sunday
+UNION ALL
+SELECT IIF((Sunday + 1) > @@lastDay, NULL, Sunday + 1)
+      ,IIF((Sunday + 2) > @@lastDay, NULL, Sunday + 2)
+	  ,IIF((Sunday + 3) > @@lastDay, NULL, Sunday + 3)
+	  ,IIF((Sunday + 4) > @@lastDay, NULL, Sunday + 4)
+	  ,IIF((Sunday + 5) > @@lastDay, NULL, Sunday + 5)
+	  ,IIF((Sunday + 6) > @@lastDay, NULL, Sunday + 6)
+	  ,IIF((Sunday + 7) > @@lastDay, NULL, Sunday + 7)
+FROM C_CTE
+WHERE Sunday < @@lastDay
+)
+SELECT * FROM C_CTE 
+GO
+
+/* the second version - with PIVOT */
 SET DATEFIRST 1
 DECLARE @@actDate DATE
 DECLARE @@firstDayOfTheMonth DATE
