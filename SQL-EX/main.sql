@@ -47,7 +47,7 @@ SELECT C.[class]
   ¬ывод: страна, количество кораблей, год*/
 
 
-/* ƒл€ каждого корабл€, участвовавшего в сражении при √вадалканале (Guadalcanal), вывести название, водоизмещение и число орудий. */
+/* For each ship that participated in the Battle of Guadalcanal, get its name, displacement, and the number of guns. */
 
   ;WITH s_CTE (ship)
 AS 

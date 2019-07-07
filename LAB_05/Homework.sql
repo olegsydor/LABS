@@ -58,6 +58,7 @@ AND A.detailid IN
 SELECT D1.detailid FROM [details] AS D1
 WHERE D1.color = 'Red')
 GO
+
 -- OR --
 SELECT DISTINCT S.supplierid, S.name
 FROM [suppliers] AS S
@@ -74,6 +75,7 @@ FROM [supplies] AS A
 WHERE A.productid IN (
 SELECT A1.productid FROM [supplies] AS A1
 WHERE A1.supplierid = 2)
+GO
 
 /* 1f.	Отримати номери виробів, для яких середній об’єм поставки деталей
 більший за найбільший об’єм поставки будь-якої деталі для виробу 1 */
@@ -82,6 +84,7 @@ FROM [supplies] AS A
 GROUP BY A.detailid
 HAVING AVG(A.quantity) > (SELECT MAX(A1.quantity) FROM [supplies] AS A1
 WHERE A1.productid = 1)
+GO
 
 /* 1g.	Вибрати вироби, що ніколи не постачались (під-запит) */
 SELECT P.* FROM [products] AS P
@@ -89,9 +92,28 @@ WHERE P.productid NOT IN
 (
 SELECT A.productid FROM [supplies] AS A
 )
+GO
 
 /* 2. Написати запити використовуючи CTE  або Hierarchical queries */
 /* 2a. Написати довільний запит з двома СТЕ  (в одному є звертання до іншого) */
+/* 1g.	Вибрати вироби, що ніколи не постачались (під-запит) SECOND EDITION*/
+
+;WITH D1_CTE (productId) AS
+(
+SELECT productid FROM [supplies]
+)
+,
+D2_CTE (productId) AS
+(
+SELECT productid FROM [products]
+EXCEPT 
+SELECT productId FROM D1_CTE
+)
+SELECT P.productid, P.name FROM D2_CTE, products AS P
+WHERE P.productid = D2_CTE.productId
+GO
+
+
 /* 2b.	Обчислити за допомогою рекурсивної CTE факторіал від 10  та вивести у форматі таблиці з колонками Position та Value : */
 ;WITH F_CTE (rowOrder, nFaktorial) AS
 (SELECT 1 AS rowOrder, 1 AS nFaktorial
@@ -148,9 +170,6 @@ SET @@actDate = GETDATE()
 SET @@firstDayOfTheMonth = DATEADD(DAY, 1, EOMONTH(@@actDate,-1))
 SET @@startOfTheMonth = datepart(dw, @@firstDayOfTheMonth)
 
---SELECT @@actDate, @@firstDayOfTheMonth, @@startOfTheMonth
- 
-
 ;WITH C_CTE (da, na, we)
 AS
 (
@@ -185,6 +204,7 @@ MIN(p.da)
 FOR p.na IN ([1], [2], [3], [4], [5], [6], [0])  
 ) AS pvt  
 
+GO
 
 /* 3. Geography	 */
 /* 3a. Створити таблицю  geography  та занести в неї дані */
@@ -247,8 +267,7 @@ GO
         id, 
         name,
         region_id,
-		0 as place_level
-        
+		0 AS place_level
     FROM       
         [geography]
 	WHERE region_id IS NULL
@@ -269,6 +288,7 @@ FROM
 	WHERE region_id = 1
 	ORDER BY id
 GO
+
 /* 3c. Написати запит який повертає під-дерево для конкретного регіону  (наприклад, Івано-Франківськ). 
 Результат має виглядати наступним чином (колонки можуть називатися інакше) */
 ;WITH cte_org AS (
@@ -294,7 +314,7 @@ GO
 SELECT region_id, id, name, place_level
 FROM 
     cte_org
-	where place_level >= 0
+	WHERE place_level >= 0
 GO
 
 /* 3d. Написати запит котрий вертає повне дерево  від root ('Ukraine') і додаткову колонку, яка вказує на рівень в ієрархії */
@@ -321,7 +341,7 @@ GO
 SELECT region_id, id, name, place_level
 FROM 
     cte_org
-	where place_level >= 0
+	WHERE place_level >= 0
 GO
 
 /* 3e. Написати запит який повертає дерево для регіону Lviv. 
@@ -355,7 +375,6 @@ GO
 
 /* 3f. Написати запит який повертає дерево зі шляхами для регіону Lviv. 
 Результат має виглядати наступним чином (назви колонок можуть не співпадати): */
-
 ;WITH cte_org AS (
     SELECT       
         id, 
@@ -425,7 +444,7 @@ SELECT S.[supplierid]
       ,S.[name]
   FROM [suppliers] AS S
 WHERE S.city = 'Paris'
-
+GO
  
 /* 4b.	Вибрати всі міста, де є постачальники  і/або деталі (два запити – перший повертає міста з дублікатами, другий без дублікатів) . 
 Міста у кожному запиті  відсортувати в алфавітному порядку */
@@ -437,6 +456,7 @@ INTERSECT
  FROM [details] AS D
 ) AS X
 ORDER BY X.city
+GO
 
 SELECT * FROM
 (SELECT S.[city]
@@ -446,6 +466,7 @@ SELECT * FROM
  FROM [details] AS D
 ) AS X
 ORDER BY X.city
+GO
 
 /* 4c.	Вибрати всіх постачальників за вийнятком тих, що постачають деталі з Лондона */
 SELECT S.[supplierid]
@@ -460,6 +481,7 @@ SELECT S.[supplierid]
   JOIN [details] AS D
   ON D.detailid = A.detailid
   AND D.city = 'London'
+GO
 
 /* 4d.	Знайти різницю між множиною продуктів, які знаходяться в Лондоні та Парижі
 і множиною продуктів, які знаходяться в Парижі та Римі */
@@ -470,6 +492,7 @@ EXCEPT
 SELECT P.[productid]
   FROM [products] AS P
   WHERE P.city IN ('Roma','Paris')
+GO
 
 /* 4e.	Вибрати поставки, що зробив постачальник з Лондона, 
 а також поставки зелених деталей за виключенням поставлених виробів з Парижу (код постачальника, код деталі, код виробу) */
@@ -489,3 +512,4 @@ SELECT A.[supplierid]
   JOIN [details] AS D
   ON D.detailid = A.detailid
   AND D.color = 'Green'
+GO
