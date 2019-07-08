@@ -10,9 +10,9 @@ WHERE S2.productid = S1.productid
 AND S2.supplierid <> S1.supplierid
 )
 GO
+
 /* 1b.	Отримати номера і прізвища постачальників, які постачають деталі для якого-небудь виробу з деталлю 1 
 в кількості більшій, ніж середній об’єм поставок деталі 1 для цього виробу */
-
 SELECT DISTINCT SID, SNANE FROM
 (
 	SELECT	S.supplierid AS SID, 
@@ -55,11 +55,13 @@ JOIN [details] AS D
 ON D.detailid = A.detailid
 AND A.detailid IN
 (
-SELECT D1.detailid FROM [details] AS D1
-WHERE D1.color = 'Red')
+	SELECT D1.detailid FROM [details] AS D1
+	WHERE D1.color = 'Red'
+)
 GO
 
--- OR --
+/*
+-- Другий варіант
 SELECT DISTINCT S.supplierid, S.name
 FROM [suppliers] AS S
 WHERE S.supplierid IN 
@@ -68,6 +70,7 @@ JOIN [details] AS D1
 ON D1.detailid = A1.detailid
 AND D1.color = 'Red')
 GO
+*/
 
 /* 1e.	Показати номери деталей, які використовуються принаймні в одному виробі, який поставляється постачальником 2 */
 SELECT DISTINCT A.detailid
@@ -96,7 +99,7 @@ GO
 
 /* 2. Написати запити використовуючи CTE  або Hierarchical queries */
 /* 2a. Написати довільний запит з двома СТЕ  (в одному є звертання до іншого) */
-/* 1g.	Вибрати вироби, що ніколи не постачались (під-запит) SECOND EDITION*/
+/* Використано завдання для вкладених CTE: Вибрати вироби, що ніколи не постачались (під-запит) SECOND EDITION*/
 
 ;WITH D1_CTE (productId) AS
 (
@@ -139,13 +142,15 @@ GO
 
 /* 2d. Розділити вхідний період 2013-11-25 до 2014-03-05 на періоди по календарним місяцям за допомогою рекурсивної CTE 
 та вивести у форматі таблиці з колонками StartDate та EndDate  */
+
+--Remark: в цьому і наступному завданнях використано змінні - для економії місця. Можна було обійтись без них.
 DECLARE @@startDate DATE, @@endDate DATE
 SET @@startDate = '20131125'
 SET @@endDate = '20140305'
 ;WITH D_CTE (startDate, endDate)
 AS
 (
---SELECT CAST('2013-11-25' AS date) AS startDate, EOMONTH('2013-11-25') AS endDate
+
 SELECT @@startDate AS startDate, EOMONTH(@@startDate) AS endDate
 UNION ALL
 SELECT DATEADD(DAY, 1, endDate ) AS startDate, 
@@ -194,6 +199,7 @@ SELECT * FROM C_CTE
 GO
 
 /* the second version - with PIVOT */
+/*
 SET DATEFIRST 1
 DECLARE @@actDate DATE
 DECLARE @@firstDayOfTheMonth DATE
@@ -239,6 +245,7 @@ FOR p.na IN ([1], [2], [3], [4], [5], [6], [0])
 ) AS pvt  
 
 GO
+*/
 
 /* 3. Geography	 */
 /* 3a. Створити таблицю  geography  та занести в неї дані */
@@ -482,7 +489,8 @@ GO
  
 /* 4b.	Вибрати всі міста, де є постачальники  і/або деталі (два запити – перший повертає міста з дублікатами, другий без дублікатів) . 
 Міста у кожному запиті  відсортувати в алфавітному порядку */
-SELECT * FROM
+--4b-1: Вибрати всі міста, де є постачальники і деталі (міста з дублікатами)
+SELECT * FROM -- INTERSECT неможливий з дублікатами
 (SELECT S.[city]
  FROM [suppliers] AS S
 INTERSECT
@@ -491,11 +499,12 @@ INTERSECT
 ) AS X
 ORDER BY X.city
 GO
+-- 4b-2 Вибрати всі міста, де є постачальники  або деталі без дублікатів
 
 SELECT * FROM
 (SELECT S.[city]
  FROM [suppliers] AS S
- UNION
+ UNION -- якби запит мав робитись з дублікатами, треба було би використати UNION ALL
  SELECT D.[city]
  FROM [details] AS D
 ) AS X
@@ -519,6 +528,8 @@ GO
 
 /* 4d.	Знайти різницю між множиною продуктів, які знаходяться в Лондоні та Парижі
 і множиною продуктів, які знаходяться в Парижі та Римі */
+-- Remark: "множиною продуктів, які знаходяться в Лондоні та Парижі" взято як продукти, що знаходять АБО в Лондоні АБО в Парижі. 
+-- Хоча б тому, що одночасно не можуть знаходитись в обидвох містах.
 SELECT P.[productid]
   FROM [products] AS P
   WHERE P.city IN ('London','Paris')
@@ -527,10 +538,9 @@ SELECT P.[productid]
   FROM [products] AS P
   WHERE P.city IN ('Roma','Paris')
 GO
-
 /* 4e.	Вибрати поставки, що зробив постачальник з Лондона, 
 а також поставки зелених деталей за виключенням поставлених виробів з Парижу (код постачальника, код деталі, код виробу) */
-
+-- Remark: "вироби" - продукти.
 SELECT A.[supplierid]
       ,A.[detailid]
       ,A.[productid]
@@ -538,12 +548,22 @@ SELECT A.[supplierid]
   JOIN [suppliers] AS S
   ON S.supplierid = A.supplierid
   AND S.city = 'London'
-  UNION ALL
- SELECT A.[supplierid]
+UNION ALL
+(
+SELECT A.[supplierid]
       ,A.[detailid]
       ,A.[productid]
   FROM [supplies] AS A
   JOIN [details] AS D
   ON D.detailid = A.detailid
   AND D.color = 'Green'
+EXCEPT
+SELECT A.[supplierid]
+      ,A.[detailid]
+      ,A.[productid]
+  FROM [supplies] AS A
+  JOIN [products] AS P
+  ON P.productid = A.productid
+  AND P.city = 'Paris'
+)
 GO
