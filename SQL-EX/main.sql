@@ -496,9 +496,6 @@ ON Y.date = D_CTE.dt
 Ó÷åñòü ïðè ýòîì, ÷òî äåíüãè íå èçûìàþòñÿ, à îñòàòêè/çàäîëæåííîñòü ïåðåõîäÿò íà ñëåäóþùèé äåíü.
 Âûâîä: ïóíêò ïðèåìà, äåíü â ôîðìàòå "dd/mm/yyyy", îñòàòêè/çàäîëæåííîñòü íà êîíåö ýòîãî äíÿ.
 */
-USE [labor_sql]
-GO
-
 
 SELECT point, CONVERT(varchar, date, 103) AS DATE,
     SUM(out) OVER (PARTITION BY point
@@ -599,3 +596,105 @@ SELECT country, class FROM C_CTE
 WHERE C_CTE.country = ALL(
 SELECT country FROM C_CTE WHERE C_CTE.country = 'Russia')
 /* 4119 */
+
+/*Для каждого корабля из таблицы Ships указать название первого по времени сражения из таблицы Battles,
+в котором корабль мог бы участвовать после спуска на воду. Если год спуска на воду неизвестен, взять последнее по времени сражение.
+Если нет сражения, произошедшего после спуска на воду корабля, вывести NULL вместо названия сражения.
+Считать, что корабль может участвовать во всех сражениях, которые произошли в год спуска на воду корабля.
+Вывод: имя корабля, год спуска на воду, название сражения
+
+Замечание: считать, что не существует двух битв, произошедших в один и тот же день.*/
+USE [sql-ex]
+GO
+SELECT ZZ.name, ZZ.launched, BB.name FROM
+(
+SELECT S.[name]
+      ,S.[launched]
+	  ,NULL AS Date
+  FROM [Ships] AS S, [Battles] AS B
+  WHERE S.launched > ALL(SELECT DATEPART(YEAR, [date]) FROM [Battles])
+UNION
+SELECT * FROM
+(
+SELECT S.[name], S.launched, MIN(B.date) AS Date
+  FROM [Ships] AS S, [Battles] AS B
+  WHERE S.launched <= DATEPART(YEAR,B.[date])
+  GROUP BY S.name, S.launched
+  HAVING S.launched IS NOT NULL
+) AS Z
+UNION
+--
+SELECT * FROM
+(
+  SELECT S.[name], S.launched, MIN(B.date) AS Date
+  FROM [Ships] AS S, [Battles] AS B
+  WHERE S.launched = DATEPART(YEAR,B.[date])
+  GROUP BY S.name, S.launched
+  HAVING S.launched IS NOT NULL
+) AS Z
+UNION
+--
+SELECT * FROM
+(
+SELECT TOP 1 WITH TIES S1.[name], NULL AS 'launched', B1.date
+  FROM [Ships] AS S1, [Battles] AS B1
+  WHERE S1.launched IS NULL
+  ORDER BY date DESC) AS X
+) AS ZZ
+LEFT JOIN [Battles] AS BB
+ON BB.date = ZZ.Date
+/* 3938 */
+
+
+/*
+Задание: 76 (Serge I: 2003-08-28)
+Определить время, проведенное в полетах, для пассажиров, летавших всегда на разных местах. Вывод: имя пассажира, время в минутах.
+*/
+SELECT G.name, Y.Tim
+FROM
+(
+SELECT SUM(IIF(X.TT < 0, X.TT+1440, X.TT)) AS Tim, X.ID_psg 
+FROM
+(
+  SELECT DATEDIFF(MINUTE, '1900-01-01 00:00:00.000', T.[time_in])-DATEDIFF(MINUTE, '1900-01-01 00:00:00.000', T.[time_out]) AS TT
+      ,P.[id_psg]
+  FROM [trip] AS T
+JOIN [pass_in_trip] AS P
+ON P.trip_no = T.trip_no
+AND P.ID_psg IN 
+(
+SELECT P.[id_psg]
+  FROM [pass_in_trip] AS P
+  GROUP BY P.ID_psg
+  HAVING COUNT(P.[place]) = COUNT(DISTINCT(P.[place]))
+)
+) AS X
+GROUP BY X.ID_psg
+) AS Y
+JOIN [passenger] AS G
+ON G.ID_psg = Y.ID_psg
+/* 3757 */
+
+
+/* Задание: 79 (Serge I: 2003-04-29)
+Определить пассажиров, которые больше других времени провели в полетах. 
+Вывод: имя пассажира, общее время в минутах, проведенное в полетах
+*/
+SELECT TOP 1 WITH TIES G.name, Y.Tim
+FROM
+(
+SELECT SUM(IIF(X.TT < 0, X.TT+1440, X.TT)) AS Tim, X.ID_psg 
+FROM
+(
+  SELECT DATEDIFF(MINUTE, '1900-01-01 00:00:00.000', T.[time_in])-DATEDIFF(MINUTE, '1900-01-01 00:00:00.000', T.[time_out]) AS TT
+      ,P.[id_psg]
+  FROM [trip] AS T
+JOIN [pass_in_trip] AS P
+ON P.trip_no = T.trip_no
+) AS X
+GROUP BY X.ID_psg
+) AS Y
+JOIN [passenger] AS G
+ON G.ID_psg = Y.ID_psg
+ORDER BY Y.Tim DESC
+/* 3644 */
