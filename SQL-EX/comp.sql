@@ -1,5 +1,3 @@
-USE [labor_sql]
-GO
 
 SELECT [maker]
       ,[model]
@@ -7,8 +5,6 @@ SELECT [maker]
   FROM [dbo].[product]
 GO
 
-USE [labor_sql]
-GO
 
 SELECT [code]
       ,[model]
@@ -16,9 +12,6 @@ SELECT [code]
       ,[type]
       ,[price]
   FROM [dbo].[printer]
-GO
-
-USE [labor_sql]
 GO
 
 SELECT [code]
@@ -31,8 +24,6 @@ SELECT [code]
   FROM [dbo].[pc]
 GO
 
-USE [labor_sql]
-GO
 
 SELECT [code]
       ,[model]

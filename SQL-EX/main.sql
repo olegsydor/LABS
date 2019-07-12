@@ -698,3 +698,25 @@ JOIN [passenger] AS G
 ON G.ID_psg = Y.ID_psg
 ORDER BY Y.Tim DESC
 /* 3644 */
+
+
+/*
+Задание: 81 (Serge I: 2011-11-25)
+Из таблицы Outcome получить все записи за тот месяц (месяцы), с учетом года, в котором суммарное значение расхода (out) было максимальным.
+*/
+
+SELECT [code]
+      ,[point]
+      ,[date]
+      ,[out] 
+FROM Outcome AS O
+JOIN
+(
+SELECT TOP (1) WITH TIES DATEPART(YEAR, O.date) AS YY, DATEPART(MONTH, O.date) AS MM FROM [Outcome] AS O
+GROUP BY DATEPART(YEAR, O.date), DATEPART(MONTH, O.date)
+ORDER BY SUM(O.[out]) DESC
+) AS X
+ON X.MM = DATEPART(MONTH, O.date)
+AND X.YY = DATEPART(YEAR, O.date)
+/* 3358 */
+
