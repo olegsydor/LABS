@@ -720,3 +720,148 @@ ON X.MM = DATEPART(MONTH, O.date)
 AND X.YY = DATEPART(YEAR, O.date)
 /* 3358 */
 
+
+/* Задание: 97 (qwrqwr: 2013-02-15)
+Отобрать из таблицы Laptop те строки, для которых выполняется следующее условие:
+значения из столбцов speed, ram, price, screen возможно расположить таким образом, что каждое последующее значение будет превосходить предыдущее в 2 раза или более.
+Замечание: все известные характеристики ноутбуков больше нуля.
+Вывод: code, speed, ram, price, screen.
+*/
+;WITH A_CTE(code, LI) AS
+(
+SELECT code, value FROM Laptop
+CROSS APPLY
+(
+VALUES (speed)
+	   ,(ram)
+	   ,(price)
+	   ,(screen)
+) spec(value)
+)
+,
+B_CTE AS
+(
+SELECT L1.code 
+FROM A_CTE AS L1
+CROSS APPLY A_CTE AS L2
+CROSS APPLY A_CTE AS L3
+CROSS APPLY A_CTE AS L4
+WHERE L2.code = L1.code
+AND L3.code = L2.code
+AND L4.code = L3.code
+AND L2.LI/L1.LI >=2
+AND L3.LI/L2.LI >=2
+AND L4.LI/L3.LI >=2
+)
+SELECT Laptop.code, Laptop.speed, Laptop.ram, Laptop.price, Laptop.screen FROM B_CTE
+JOIN Laptop
+ON Laptop.code = B_CTE.code
+/* 3218 */
+
+/* Задание: 121 (Serge I: 2005-05-23)
+Найдите названия всех тех кораблей из базы данных, о которых можно определенно сказать, что они были спущены на воду до 1941 г.
+*/
+USE [sql-ex]
+GO
+;WITH A_CTE AS
+(
+SELECT S.[name] AS N
+      ,S.class AS C
+      ,S.[launched] AS L
+  FROM [Ships] AS S
+UNION ALL
+SELECT O.[ship] AS N
+      ,IIF((SELECT [Class] FROM [Ships] AS S1 WHERE S1.name = O.ship) IS NULL, O.[Ship],(SELECT [Class] FROM [Ships] AS S1 WHERE S1.name = O.ship)) AS C
+	  ,DATEPART(YEAR, B.date) AS L
+  FROM [Outcomes] AS O
+JOIN [Battles] AS B
+ON B.name = O.battle
+UNION ALL
+SELECT O.[ship] AS N
+      ,O.[ship] AS C
+	  , NULL
+  FROM [Outcomes] AS O
+JOIN [Classes] AS C
+ON C.class = O.ship
+)
+SELECT XX.N--, MIN(XX.L)
+FROM
+(
+SELECT N
+      ,C
+	  ,IIF(C = N AND L IS NULL, (SELECT MIN(L) FROM A_CTE AS X1 GROUP BY X1.C HAVING X1.C = A_CTE.C), NULL) AS L
+FROM A_CTE
+UNION ALL
+SELECT N, C, L
+FROM A_CTE
+) AS XX
+GROUP BY XX.N
+HAVING MIN(XX.L) < 1941
+/* 3081 */
+
+/* Задание: 83 (dorin_larsen: 2006-03-14)
+Определить названия всех кораблей из таблицы Ships, которые удовлетворяют, по крайней мере, комбинации любых четырёх критериев из следующего списка: 
+numGuns = 8 
+bore = 15 
+displacement = 32000 
+type = bb 
+launched = 1915 
+class=Kongo 
+country=USA
+*/
+SELECT X.* FROM
+--SELECT X.name FROM
+(
+SELECT S.[name]
+      ,S.[class]
+      ,CASE WHEN C.numGuns = 8 THEN 1 ELSE 0 END AS NG
+	  ,CASE WHEN C.bore = 15 THEN 1 ELSE 0 END AS BO
+	  ,CASE WHEN C.displacement = 32000 THEN 1 ELSE 0 END AS DI
+	  ,CASE WHEN C.type = 'bb' THEN 1 ELSE 0 END AS TY
+	  ,CASE WHEN S.launched = 1915 THEN 1 ELSE 0 END AS LA
+	  ,CASE WHEN S.class = 'Kongo' THEN 1 ELSE 0 END AS CL
+	  ,CASE WHEN C.country = 'USA' THEN 1 ELSE 0 END AS CO
+  FROM [Ships] AS S
+FULL OUTER JOIN [Classes] AS C
+ON C.class = S.class
+) AS X
+WHERE X.NG + X.BO + X.DI + X.TY + X.LA + X.CL + X.CO >= 4
+
+/* 2989 */
+
+/* Задание: 84 (Serge I: 2003-06-05)
+Для каждой компании подсчитать количество перевезенных пассажиров (если они были в этом месяце) по декадам апреля 2003. При этом учитывать только дату вылета. 
+Вывод: название компании, количество пассажиров за каждую декаду
+*/
+
+SELECT X.name, SUM(X.[1-10]), SUM(X.[11-20]), SUM(X.[21-30]) FROM
+(
+SELECT C.[name]
+      ,CASE WHEN DATEPART(DAY, P.date) BETWEEN 1 AND 10 THEN 1 ELSE 0 END AS '1-10'
+      ,CASE WHEN DATEPART(DAY, P.date) BETWEEN 11 AND 20 THEN 1 ELSE 0 END AS '11-20'
+      ,CASE WHEN DATEPART(DAY, P.date) BETWEEN 21 AND 30 THEN 1 ELSE 0 END AS '21-30'
+  FROM [pass_in_trip] AS P
+JOIN [trip] AS T
+ON T.trip_no = P.trip_no
+JOIN [company] AS C
+ON C.ID_comp = T.ID_comp
+WHERE DATEPART(YEAR, P.date) = 2003
+AND DATEPART(MONTH, P.date) = 4
+) AS X
+GROUP BY X.name
+
+/* 2901 */ 
+
+/*Задание: 82 (Serge I: 2011-10-08)
+В наборе записей из таблицы PC, отсортированном по столбцу code (по возрастанию) найти среднее значение цены для каждой шестерки подряд идущих ПК.
+Вывод: значение code, которое является первым в наборе из шести строк, среднее значение цены в наборе. */
+
+SELECT X.code, X.S FROM 
+(
+SELECT [code]
+      ,ROW_NUMBER () OVER (ORDER BY [code]) AS T
+      ,AVG([price]) OVER (ORDER BY [code] ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING) AS S
+  FROM [dbo].[pc]
+) AS X
+WHERE T < (SELECT COUNT(*) FROM PC) - 4
+/* 2790 */
