@@ -82,9 +82,9 @@ GO
 
 /* 1f.	Отримати номери виробів, для яких середній об’єм поставки деталей
 більший за найбільший об’єм поставки будь-якої деталі для виробу 1 */
-SELECT A.detailid 
+SELECT A.productid 
 FROM [supplies] AS A
-GROUP BY A.detailid
+GROUP BY A.productid
 HAVING AVG(A.quantity) > (SELECT MAX(A1.quantity) FROM [supplies] AS A1
 WHERE A1.productid = 1)
 GO
@@ -392,7 +392,7 @@ GO
         id, 
         name,
         region_id,
-		-1 AS place_level
+		1 AS place_level
     FROM       
         [geography]
 	WHERE id = 2
@@ -410,7 +410,7 @@ GO
 SELECT region_id, id, name, place_level
 FROM 
     cte_org
-	WHERE place_level >= 0
+	WHERE place_level >= 1
 	ORDER BY id
 GO
 
