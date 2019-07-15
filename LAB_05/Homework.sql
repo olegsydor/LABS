@@ -499,6 +499,17 @@ INTERSECT
 ) AS X
 ORDER BY X.city
 GO
+
+-- Added 15/07 after reviewing - INTERSECT ALL emulation
+SELECT X.city FROM
+(
+SELECT ROW_NUMBER() OVER(PARTITION BY city ORDER BY (SELECT 0)) AS RN
+      ,city FROM suppliers
+INTERSECT
+SELECT ROW_NUMBER() OVER(PARTITION BY city ORDER BY (SELECT 0)) AS RN
+      ,city FROM details
+) AS X
+ORDER BY 1
 -- 4b-2 Вибрати всі міста, де є постачальники  або деталі без дублікатів
 
 SELECT * FROM
