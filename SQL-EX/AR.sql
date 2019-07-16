@@ -26,14 +26,3 @@ JOIN Outcomes AS O
 ON A.NA = O.ship
 AND O.result = 'sunk'
 ) AS X
-
-
-/*Задание: 82 */
-/* В наборе записей из таблиці PC, отсортированном по столбцу code по возрастанию найти среднее значение цені для каждой шестерки подряд ижущих пк
-вівод: код, первій в наборе, среднее значение в наборе */
-
-SELECT [code]
-      ,[price]
-      ,AVG([price]) OVER (ORDER BY [code] ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING) AS S
-  FROM [dbo].[pc]
-GO

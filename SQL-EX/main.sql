@@ -865,3 +865,27 @@ SELECT [code]
 ) AS X
 WHERE T < (SELECT COUNT(*) FROM PC) - 4
 /* 2790 */
+
+
+/* 
+Задание: 85 (Serge I: 2012-03-16)
+
+Найти производителей, которые выпускают только принтеры или только PC.
+При этом искомые производители PC должны выпускать не менее 3 моделей.
+*/
+SELECT [maker] FROM [product] AS P
+WHERE [type] = 'Printer' AND 
+NOT EXISTS (SELECT * FROM [product] AS P1 WHERE P1.[maker] = P.[maker] AND P1.[type] <> P.[type])
+UNION
+SELECT [maker] FROM [product] AS P
+WHERE [type] = 'PC' AND 
+NOT EXISTS (SELECT * FROM [product] AS P1 WHERE P1.[maker] = P.[maker] AND P1.[type] <> P.[type])
+GROUP BY [maker]
+HAVING COUNT([maker]) >=3
+
+/* The same but made by other */
+select maker  from product
+group by maker having count(distinct type)=1
+and
+(max(type)='Printer' or max(type)='PC' and count(model)>  2)
+

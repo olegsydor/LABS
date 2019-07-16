@@ -510,6 +510,7 @@ SELECT ROW_NUMBER() OVER(PARTITION BY city ORDER BY (SELECT 0)) AS RN
       ,city FROM details
 ) AS X
 ORDER BY 1
+
 -- 4b-2 Вибрати всі міста, де є постачальники  або деталі без дублікатів
 
 SELECT * FROM
@@ -521,6 +522,19 @@ SELECT * FROM
 ) AS X
 ORDER BY X.city
 GO
+
+--4b-3 -- Added after reviewing 15/07
+SELECT X.city FROM
+(
+SELECT ROW_NUMBER() OVER(PARTITION BY city ORDER BY (SELECT 0)) AS RN
+      ,city FROM suppliers
+INTERSECT
+SELECT ROW_NUMBER() OVER(PARTITION BY city ORDER BY (SELECT 0)) AS RN
+      ,city FROM details
+) AS X
+ORDER BY 1
+
+
 
 /* 4c.	Вибрати всіх постачальників за вийнятком тих, що постачають деталі з Лондона */
 SELECT S.[supplierid]
