@@ -889,3 +889,18 @@ group by maker having count(distinct type)=1
 and
 (max(type)='Printer' or max(type)='PC' and count(model)>  2)
 
+/*
+Exercise: 86 (Serge I: 2012-04-20)
+For each maker, list the types of products he produces in alphabetic order, using a slash ("/") as a delimiter.
+Result set: maker, list of product types.
+*/
+
+SELECT X.maker, STRING_AGG(X.[type], '/') as 'types'
+FROM
+(
+SELECT [maker]
+      ,[type]
+  FROM [product]
+  GROUP BY [maker], [type]
+) AS X
+GROUP BY X.maker
