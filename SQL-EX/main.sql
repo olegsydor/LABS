@@ -904,3 +904,41 @@ SELECT [maker]
   GROUP BY [maker], [type]
 ) AS X
 GROUP BY X.maker
+
+/* Задание: 87 (Serge I: 2003-08-28)
+
+Считая, что пункт самого первого вылета пассажира является местом жительства, найти не москвичей, которые прилетали в Москву более одного раза. 
+Вывод: имя пассажира, количество полетов в Москву
+*/
+
+SELECT name, CNT FROM
+(
+SELECT P.[id_psg]
+      ,COUNT(T.[town_to]) AS CNT
+  FROM [pass_in_trip] AS P
+  JOIN [trip] AS T
+  ON T.trip_no = P.trip_no
+  AND T.town_to = 'Moscow'
+  GROUP BY P.id_psg
+) AS Y
+  JOIN [passenger] AS P1
+  ON P1.id_psg = Y.id_psg
+  WHERE CNT > 1 AND
+  Y.[id_psg] IN 
+(
+
+-- born not in moscow
+SELECT X.id_psg
+FROM
+(
+SELECT P.[date]
+      ,P.[id_psg]
+      ,T.[town_from]
+	  ,ROW_NUMBER() OVER(PARTITION BY [id_psg] ORDER BY [date], [time_out]) AS 'FirstCity'
+  FROM [pass_in_trip] AS P
+  JOIN [trip] AS T
+  ON T.trip_no = P.trip_no
+) AS X
+WHERE X.FirstCity = 1 AND X.town_from <> 'Moscow'
+)
+/* 2545	*/
