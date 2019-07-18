@@ -942,3 +942,77 @@ SELECT P.[date]
 WHERE X.FirstCity = 1 AND X.town_from <> 'Moscow'
 )
 /* 2545	*/
+
+/*
+Задание: 89 (Serge I: 2012-05-04)
+
+Найти производителей, у которых больше всего моделей в таблице Product, а также тех, у которых меньше всего моделей.
+Вывод: maker, число моделей
+*/
+
+SELECT * FROM
+(
+SELECT TOP (1) with ties [maker]
+      ,COUNT([model]) AS CNT
+  FROM [dbo].[product]
+  GROUP BY [maker]
+  ORDER BY COUNT([model])
+) AS X
+
+union
+SELECT * FROM (
+SELECT TOP (1) with ties [maker]
+      ,COUNT([model]) AS CNT
+  FROM [dbo].[product]
+  GROUP BY [maker]
+  ORDER BY COUNT([model]) DESC
+  ) AS Y
+  /* 2427 */
+
+  /*
+Задание: 90 (Serge I: 2012-05-04)
+
+Вывести все строки из таблицы Product, кроме трех строк с наименьшими номерами моделей и трех строк с наибольшими номерами моделей.
+*/
+
+SELECT * FROM [product]
+WHERE [model] NOT IN (SELECT TOP (3) [model] FROM [product] ORDER BY [model]) AND
+      [model] NOT IN (SELECT TOP (3) [model] FROM [product] ORDER BY [model] DESC)
+
+/* 2340 */
+
+
+
+;WITH A_CTE AS
+(
+SELECT 0 AS NUM1, MIN(B.Fdate) AS Fdate
+FROM  
+(
+SELECT TOP (1) WITH TIES
+       P.date AS Fdate
+	   ,COUNT(DISTINCT T.trip_no) AS C
+FROM [trip] AS T
+JOIN [pass_in_trip] AS P
+ON P.trip_no = T.trip_no
+GROUP BY P.date, T.town_from
+HAVING T.town_from = 'Rostov'
+ORDER BY C DESC
+) AS B
+
+UNION ALL
+SELECT NUM1+1, 
+       DATEADD(DAY, 1, Fdate) 
+FROM A_CTE AS B_CTE
+WHERE NUM1 < 6
+)
+SELECT A.Fdate, CASE WHEN X.CC IS NULL THEN 0 ELSE X.CC END FROM A_CTE AS A
+LEFT JOIN
+(
+SELECT P.date, COUNT(DISTINCT P.trip_no) AS CC FROM [trip] AS T
+JOIN [pass_in_trip] AS P
+ON P.trip_no = T.trip_no
+GROUP BY T.town_from, P.date
+HAVING T.town_from = 'Rostov'
+) AS X
+ON X.date = A.Fdate
+/* 2245 */
