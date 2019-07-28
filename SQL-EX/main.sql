@@ -1016,3 +1016,26 @@ HAVING T.town_from = 'Rostov'
 ) AS X
 ON X.date = A.Fdate
 /* 2245 */
+
+
+/*
+Задание: 95 (qwrqwr: 2013-02-08)
+На основании информации из таблицы Pass_in_Trip, для каждой авиакомпании определить:
+1) количество выполненных перелетов;
+2) число использованных типов самолетов;
+3) количество перевезенных различных пассажиров;
+4) общее число перевезенных компанией пассажиров.
+Вывод: Название компании, 1), 2), 3), 4).*/
+
+
+SELECT C.name
+      ,COUNT(DISTINCT CONCAT(P.date, P.trip_no))
+      ,COUNT(DISTINCT T.[plane])
+	  ,COUNT(DISTINCT P.[ID_psg])
+	  ,COUNT(P.[ID_psg])
+FROM [Pass_in_trip] AS P
+JOIN [Trip] AS T
+ON T.trip_no = P.trip_no
+JOIN [Company] AS C
+ON C.ID_comp = T.ID_comp
+GROUP BY C.name
